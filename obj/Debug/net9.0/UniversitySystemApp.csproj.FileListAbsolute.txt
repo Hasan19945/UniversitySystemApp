@@ -1,0 +1,15 @@
+C:\Users\Ramazan\Desktop\UniversitySystemApp\bin\Debug\net9.0\UniversitySystemApp.exe
+C:\Users\Ramazan\Desktop\UniversitySystemApp\bin\Debug\net9.0\UniversitySystemApp.deps.json
+C:\Users\Ramazan\Desktop\UniversitySystemApp\bin\Debug\net9.0\UniversitySystemApp.runtimeconfig.json
+C:\Users\Ramazan\Desktop\UniversitySystemApp\bin\Debug\net9.0\UniversitySystemApp.dll
+C:\Users\Ramazan\Desktop\UniversitySystemApp\bin\Debug\net9.0\UniversitySystemApp.pdb
+C:\Users\Ramazan\Desktop\UniversitySystemApp\obj\Debug\net9.0\UniversitySystemApp.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Ramazan\Desktop\UniversitySystemApp\obj\Debug\net9.0\UniversitySystemApp.AssemblyInfoInputs.cache
+C:\Users\Ramazan\Desktop\UniversitySystemApp\obj\Debug\net9.0\UniversitySystemApp.AssemblyInfo.cs
+C:\Users\Ramazan\Desktop\UniversitySystemApp\obj\Debug\net9.0\UniversitySystemApp.csproj.CoreCompileInputs.cache
+C:\Users\Ramazan\Desktop\UniversitySystemApp\obj\Debug\net9.0\UniversitySystemApp.sourcelink.json
+C:\Users\Ramazan\Desktop\UniversitySystemApp\obj\Debug\net9.0\UniversitySystemApp.dll
+C:\Users\Ramazan\Desktop\UniversitySystemApp\obj\Debug\net9.0\refint\UniversitySystemApp.dll
+C:\Users\Ramazan\Desktop\UniversitySystemApp\obj\Debug\net9.0\UniversitySystemApp.pdb
+C:\Users\Ramazan\Desktop\UniversitySystemApp\obj\Debug\net9.0\UniversitySystemApp.genruntimeconfig.cache
+C:\Users\Ramazan\Desktop\UniversitySystemApp\obj\Debug\net9.0\ref\UniversitySystemApp.dll
