@@ -1,16 +1,13 @@
+using System;
+
 namespace UniversitySystemApp.Models
 {
-    /*
-     * ExchangePeriod stores the start and end of an exchange stay.
-     * 
-     * A separate class makes the design cleaner and easier to understand.
-     */
-    public class ExchangePeriod
+    public struct ExchangePeriod
     {
-        public string From { get; set; }
-        public string To { get; set; }
+        public DateTime From { get; set; }
+        public DateTime To { get; set; }
 
-        public ExchangePeriod(string from, string to)
+        public ExchangePeriod(DateTime from, DateTime to)
         {
             From = from;
             To = to;
@@ -18,7 +15,7 @@ namespace UniversitySystemApp.Models
 
         public override string ToString()
         {
-            return $"{From} - {To}";
+            return $"{From:yyyy-MM-dd} - {To:yyyy-MM-dd}";
         }
     }
 }

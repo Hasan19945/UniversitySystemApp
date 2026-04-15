@@ -2,25 +2,49 @@ using System.Collections.Generic;
 
 namespace UniversitySystemApp.Models
 {
-    /*
-     * Student inherits from User.
-     * 
-     * In addition to the common user properties,
-     * a student has a list of enrolled course codes.
-     */
     public class Student : User
     {
         public List<string> EnrolledCourses { get; set; }
+        public Dictionary<string, string> Grades { get; set; }
 
-        public Student(string id, string name, string email)
-            : base(id, name, email)
+        public Student(
+            string id,
+            string name,
+            string email,
+            string username,
+            string password)
+            : base(id, name, email, username, password, UserRole.Student)
         {
             EnrolledCourses = new List<string>();
+            Grades = new Dictionary<string, string>();
+        }
+
+        public bool IsEnrolledIn(string courseCode)
+        {
+            return EnrolledCourses.Contains(courseCode);
+        }
+
+        public void EnrollInCourse(string courseCode)
+        {
+            if (!EnrolledCourses.Contains(courseCode))
+            {
+                EnrolledCourses.Add(courseCode);
+            }
+        }
+
+        public void UnenrollFromCourse(string courseCode)
+        {
+            EnrolledCourses.Remove(courseCode);
+        }
+
+        public void SetGrade(string courseCode, string grade)
+        {
+            Grades[courseCode] = grade;
         }
 
         public override string ToString()
         {
-            return $"Student: {Id} - {Name} - {Email}";
+            return $"Student: {Id} - {Name} - {Email} - Username: {Username}";
         }
     }
 }

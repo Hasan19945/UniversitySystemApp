@@ -1,17 +1,5 @@
 namespace UniversitySystemApp.Models
 {
-    /*
-     * Book represents a library item.
-     * 
-     * Required properties:
-     * - Id
-     * - Title
-     * - Author
-     * - Year
-     * - NumberOfCopies
-     * 
-     * AvailableCopies is used to check whether borrowing is possible.
-     */
     public class Book
     {
         public string Id { get; set; }
@@ -29,6 +17,27 @@ namespace UniversitySystemApp.Models
             Year = year;
             NumberOfCopies = numberOfCopies;
             AvailableCopies = numberOfCopies;
+        }
+
+        public bool CanBorrow()
+        {
+            return AvailableCopies > 0;
+        }
+
+        public void BorrowCopy()
+        {
+            if (AvailableCopies > 0)
+            {
+                AvailableCopies--;
+            }
+        }
+
+        public void ReturnCopy()
+        {
+            if (AvailableCopies < NumberOfCopies)
+            {
+                AvailableCopies++;
+            }
         }
 
         public override string ToString()

@@ -1,25 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UniversitySystemApp.Interfaces;
 using UniversitySystemApp.Models;
 
 namespace UniversitySystemApp.Services
 {
-    /*
-     * UniversitySystem contains the main business logic of the application.
-     * 
-     * Responsibilities:
-     * - store users, courses, books, and loans
-     * - create courses
-     * - enroll students
-     * - search courses
-     * - search books
-     * - borrow and return books
-     * - print loan information
-     * 
-     * This keeps Program.cs cleaner because the logic is separated from the menu.
-     */
-    public class UniversitySystem
+    public class UniversitySystem : IUserAuthentication
     {
         public List<Student> Students { get; set; }
         public List<Staff> StaffMembers { get; set; }
@@ -38,138 +25,364 @@ namespace UniversitySystemApp.Services
             SeedData();
         }
 
-        /*
-         * SeedData adds some sample data.
-         * 
-         * This allows quick testing without manually entering everything.
-         */
         private void SeedData()
         {
-            Students.Add(new Student("S1001", "Hasan", "hasan@email.com"));
-            Students.Add(new Student("S1002", "Ali", "ali@email.com"));
+            Students.Add(new Student("S1001", "Hasan", "hasan@email.com", "hasan", "1234"));
+            Students.Add(new Student("S1002", "Ali", "ali@email.com", "ali", "1234"));
 
             Students.Add(new ExchangeStudent(
                 "S2001",
                 "Elif",
                 "elif@email.com",
+                "elif",
+                "1234",
                 "University of Oslo",
                 "Norway",
-                new ExchangePeriod("2026-01-01", "2026-06-01")));
+                new ExchangePeriod(new DateTime(2026, 1, 1), new DateTime(2026, 6, 1))));
 
-            StaffMembers.Add(new Staff("A1001", "Kari", "kari@email.com", "Librarian", "Library"));
+            Staff teacher = new Staff(
+                "T1001",
+                "Ola",
+                "ola@email.com",
+                "ola",
+                "1234",
+                UserRole.Teacher,
+                "Teacher",
+                "IT");
 
-            Courses.Add(new Course("CS101", "Programming", 10, 2));
-            Courses.Add(new Course("DB202", "Databases", 10, 3));
+            Staff librarian = new Staff(
+                "L1001",
+                "Kari",
+                "kari@email.com",
+                "kari",
+                "1234",
+                UserRole.Librarian,
+                "Librarian",
+                "Library");
+
+            StaffMembers.Add(teacher);
+            StaffMembers.Add(librarian);
+
+            Courses.Add(new Course("CS101", "Programming", 10, 2, teacher));
+            Courses.Add(new Course("DB202", "Databases", 10, 3, teacher));
 
             Books.Add(new Book("B1", "Clean Code", "Robert C. Martin", 2008, 2));
             Books.Add(new Book("B2", "Design Patterns", "GoF", 1994, 1));
         }
 
-        /*
-         * Creates a new course if the course code is unique.
-         */
-        public void CreateCourse(string code, string name, int credits, int maxStudents)
+        public User? Login(string username, string password)
         {
-            Course existingCourse = Courses.FirstOrDefault(c =>
-                c.Code.Equals(code, StringComparison.OrdinalIgnoreCase));
+            User? student = Students.FirstOrDefault(s =>
+                s.Username.Equals(username, StringComparison.OrdinalIgnoreCase) &&
+                s.CheckPassword(password));
 
-            if (existingCourse != null)
+            if (student != null)
             {
-                Console.WriteLine("This course code already exists.");
-                return;
+                return student;
             }
 
-            Course course = new Course(code, name, credits, maxStudents);
-            Courses.Add(course);
+            User? staff = StaffMembers.FirstOrDefault(s =>
+                s.Username.Equals(username, StringComparison.OrdinalIgnoreCase) &&
+                s.CheckPassword(password));
 
-            Console.WriteLine("Course created successfully.");
+            return staff;
         }
 
-        /*
-         * Enrolls a student in a course.
-         * 
-         * Checks:
-         * - student exists
-         * - course exists
-         * - course has capacity
-         * - student is not already enrolled
-         */
-        public void EnrollStudentInCourse(string studentId, string courseCode)
+        public bool UsernameExists(string username)
         {
-            Student student = Students.FirstOrDefault(s =>
-                s.Id.Equals(studentId, StringComparison.OrdinalIgnoreCase));
+            return Students.Any(s => s.Username.Equals(username, StringComparison.OrdinalIgnoreCase)) ||
+                   StaffMembers.Any(s => s.Username.Equals(username, StringComparison.OrdinalIgnoreCase));
+        }
 
-            Course course = Courses.FirstOrDefault(c =>
-                c.Code.Equals(courseCode, StringComparison.OrdinalIgnoreCase));
-
-            if (student == null)
+        public bool RegisterStudent(string id, string name, string email, string username, string password)
+        {
+            if (Students.Any(s => s.Id.Equals(id, StringComparison.OrdinalIgnoreCase)))
             {
-                Console.WriteLine("Student not found.");
-                return;
+                return false;
+            }
+
+            if (UsernameExists(username))
+            {
+                return false;
+            }
+
+            Students.Add(new Student(id, name, email, username, password));
+            return true;
+        }
+
+        public bool RegisterStaff(
+            string id,
+            string name,
+            string email,
+            string username,
+            string password,
+            UserRole role,
+            string position,
+            string department)
+        {
+            if (role != UserRole.Teacher && role != UserRole.Librarian)
+            {
+                return false;
+            }
+
+            if (StaffMembers.Any(s => s.Id.Equals(id, StringComparison.OrdinalIgnoreCase)))
+            {
+                return false;
+            }
+
+            if (UsernameExists(username))
+            {
+                return false;
+            }
+
+            StaffMembers.Add(new Staff(id, name, email, username, password, role, position, department));
+            return true;
+        }
+
+        public Student? GetStudentById(string studentId)
+        {
+            return Students.FirstOrDefault(s =>
+                s.Id.Equals(studentId, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public Staff? GetStaffById(string staffId)
+        {
+            return StaffMembers.FirstOrDefault(s =>
+                s.Id.Equals(staffId, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public User? GetUserById(string userId)
+        {
+            User? student = Students.FirstOrDefault(s =>
+                s.Id.Equals(userId, StringComparison.OrdinalIgnoreCase));
+
+            if (student != null)
+            {
+                return student;
+            }
+
+            return StaffMembers.FirstOrDefault(s =>
+                s.Id.Equals(userId, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public Course? GetCourseByCode(string courseCode)
+        {
+            return Courses.FirstOrDefault(c =>
+                c.Code.Equals(courseCode, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public Book? GetBookById(string bookId)
+        {
+            return Books.FirstOrDefault(b =>
+                b.Id.Equals(bookId, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public bool RegisterBook(string id, string title, string author, int year, int copies)
+        {
+            if (Books.Any(b => b.Id.Equals(id, StringComparison.OrdinalIgnoreCase)))
+            {
+                return false;
+            }
+
+            if (copies <= 0)
+            {
+                return false;
+            }
+
+            Books.Add(new Book(id, title, author, year, copies));
+            return true;
+        }
+
+        public bool CreateCourse(string code, string name, int credits, int maxStudents, string teacherId)
+        {
+            if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(name))
+            {
+                return false;
+            }
+
+            if (Courses.Any(c => c.Code.Equals(code, StringComparison.OrdinalIgnoreCase) ||
+                                 c.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
+            {
+                return false;
+            }
+
+            Staff? teacher = GetStaffById(teacherId);
+
+            if (teacher == null || teacher.Role != UserRole.Teacher)
+            {
+                return false;
+            }
+
+            Courses.Add(new Course(code, name, credits, maxStudents, teacher));
+            return true;
+        }
+
+        public bool EnrollStudentInCourse(string studentId, string courseCode)
+        {
+            Student? student = GetStudentById(studentId);
+            Course? course = GetCourseByCode(courseCode);
+
+            if (student == null || course == null)
+            {
+                return false;
+            }
+
+            return course.EnrollStudent(student);
+        }
+
+        public bool UnenrollStudentFromCourse(string studentId, string courseCode)
+        {
+            Course? course = GetCourseByCode(courseCode);
+
+            if (course == null)
+            {
+                return false;
+            }
+
+            return course.UnenrollStudent(studentId);
+        }
+
+        public bool SetGrade(string teacherId, string courseCode, string studentId, string grade)
+        {
+            Staff? teacher = GetStaffById(teacherId);
+            Course? course = GetCourseByCode(courseCode);
+
+            if (teacher == null || teacher.Role != UserRole.Teacher)
+            {
+                return false;
             }
 
             if (course == null)
             {
-                Console.WriteLine("Course not found.");
-                return;
+                return false;
             }
 
-            if (!course.HasCapacity())
+            if (course.Teacher == null || !course.Teacher.Id.Equals(teacherId, StringComparison.OrdinalIgnoreCase))
             {
-                Console.WriteLine("Course is full.");
-                return;
+                return false;
             }
 
-            if (course.Students.Any(s => s.Id.Equals(studentId, StringComparison.OrdinalIgnoreCase)))
-            {
-                Console.WriteLine("Student is already enrolled in this course.");
-                return;
-            }
-
-            course.Students.Add(student);
-            student.EnrolledCourses.Add(course.Code);
-
-            Console.WriteLine("Student enrolled successfully.");
+            return course.SetGrade(studentId, grade);
         }
 
-        /*
-         * Removes a student from a course.
-         * 
-         * The assignment text includes this functionality,
-         * so it is implemented here even if it is not directly in the menu.
-         */
-        public void UnenrollStudentFromCourse(string studentId, string courseCode)
+        public bool SetCurriculum(string teacherId, string courseCode, string curriculum)
         {
-            Student student = Students.FirstOrDefault(s =>
-                s.Id.Equals(studentId, StringComparison.OrdinalIgnoreCase));
+            Staff? teacher = GetStaffById(teacherId);
+            Course? course = GetCourseByCode(courseCode);
 
-            Course course = Courses.FirstOrDefault(c =>
-                c.Code.Equals(courseCode, StringComparison.OrdinalIgnoreCase));
-
-            if (student == null || course == null)
+            if (teacher == null || teacher.Role != UserRole.Teacher)
             {
-                Console.WriteLine("Student or course not found.");
-                return;
+                return false;
             }
 
-            Student enrolledStudent = course.Students.FirstOrDefault(s =>
-                s.Id.Equals(studentId, StringComparison.OrdinalIgnoreCase));
-
-            if (enrolledStudent == null)
+            if (course == null)
             {
-                Console.WriteLine("Student is not enrolled in this course.");
-                return;
+                return false;
             }
 
-            course.Students.Remove(enrolledStudent);
-            student.EnrolledCourses.Remove(course.Code);
+            if (course.Teacher == null || !course.Teacher.Id.Equals(teacherId, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
 
-            Console.WriteLine("Student unenrolled successfully.");
+            course.Curriculum = curriculum;
+            return true;
         }
 
-        /*
-         * Prints all courses and the participants in each course.
-         */
+        public List<Course> SearchCourse(string query)
+        {
+            query = query?.Trim() ?? "";
+
+            return Courses.Where(c =>
+                c.Code.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                c.Name.Contains(query, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        public List<Book> SearchBook(string query)
+        {
+            query = query?.Trim() ?? "";
+
+            return Books.Where(b =>
+                b.Id.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                b.Title.Contains(query, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        public bool BorrowBook(string userId, string bookId)
+        {
+            User? borrower = GetUserById(userId);
+            Book? book = GetBookById(bookId);
+
+            if (borrower == null || book == null)
+            {
+                return false;
+            }
+
+            if (!book.CanBorrow())
+            {
+                return false;
+            }
+
+            bool alreadyBorrowed = Loans.Any(l =>
+                l.Borrower.Id.Equals(userId, StringComparison.OrdinalIgnoreCase) &&
+                l.Book.Id.Equals(bookId, StringComparison.OrdinalIgnoreCase) &&
+                l.IsActive());
+
+            if (alreadyBorrowed)
+            {
+                return false;
+            }
+
+            Loans.Add(new Loan(borrower, book));
+            book.BorrowCopy();
+            return true;
+        }
+
+        public bool ReturnBook(string userId, string bookId)
+        {
+            Loan? loan = Loans.FirstOrDefault(l =>
+                l.Borrower.Id.Equals(userId, StringComparison.OrdinalIgnoreCase) &&
+                l.Book.Id.Equals(bookId, StringComparison.OrdinalIgnoreCase) &&
+                l.IsActive());
+
+            if (loan == null)
+            {
+                return false;
+            }
+
+            loan.ReturnBook();
+            loan.Book.ReturnCopy();
+            return true;
+        }
+
+        public List<Loan> GetActiveLoans()
+        {
+            return Loans.Where(l => l.IsActive()).ToList();
+        }
+
+        public List<Loan> GetLoanHistory()
+        {
+            return Loans.Where(l => !l.IsActive()).ToList();
+        }
+
+        public List<Course> GetCoursesForStudent(string studentId)
+        {
+            return Courses.Where(c => c.HasStudent(studentId)).ToList();
+        }
+
+        public Dictionary<string, string> GetGradesForStudent(string studentId)
+        {
+            Student? student = GetStudentById(studentId);
+
+            if (student == null)
+            {
+                return new Dictionary<string, string>();
+            }
+
+            return student.Grades;
+        }
+
         public void PrintCoursesAndParticipants()
         {
             if (Courses.Count == 0)
@@ -178,185 +391,81 @@ namespace UniversitySystemApp.Services
                 return;
             }
 
-            foreach (var course in Courses)
+            foreach (Course course in Courses)
             {
                 Console.WriteLine(course);
 
-                if (course.Students.Count == 0)
+                if (course.Enrollments.Count == 0)
                 {
                     Console.WriteLine("  No students enrolled.");
                 }
                 else
                 {
-                    foreach (var student in course.Students)
+                    foreach (CourseEnrollment enrollment in course.Enrollments)
                     {
-                        Console.WriteLine($"  - {student.Id} | {student.Name}");
+                        Console.WriteLine($"  - {enrollment}");
                     }
                 }
-
-                Console.WriteLine();
             }
         }
 
-        /*
-         * Searches for courses by code or name.
-         */
-        public void SearchCourse(string query)
+        public void PrintCourses(List<Course> courses)
         {
-            var results = Courses.Where(c =>
-                c.Code.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-                c.Name.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
-
-            if (results.Count == 0)
+            if (courses.Count == 0)
             {
                 Console.WriteLine("No matching courses found.");
                 return;
             }
 
-            foreach (var course in results)
+            foreach (Course course in courses)
             {
                 Console.WriteLine(course);
             }
         }
 
-        /*
-         * Searches for books by id or title.
-         */
-        public void SearchBook(string query)
+        public void PrintBooks(List<Book> books)
         {
-            var results = Books.Where(b =>
-                b.Id.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-                b.Title.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
-
-            if (results.Count == 0)
+            if (books.Count == 0)
             {
                 Console.WriteLine("No matching books found.");
                 return;
             }
 
-            foreach (var book in results)
+            foreach (Book book in books)
             {
                 Console.WriteLine(book);
             }
         }
 
-        /*
-         * Borrows a book for a user.
-         * 
-         * A user can be:
-         * - Student
-         * - Staff
-         * 
-         * Checks:
-         * - user exists
-         * - book exists
-         * - book has available copies
-         */
-        public void BorrowBook(string userId, string bookId)
-        {
-            User borrower = Students.FirstOrDefault(s =>
-                s.Id.Equals(userId, StringComparison.OrdinalIgnoreCase));
-
-            if (borrower == null)
-            {
-                borrower = StaffMembers.FirstOrDefault(s =>
-                    s.Id.Equals(userId, StringComparison.OrdinalIgnoreCase));
-            }
-
-            if (borrower == null)
-            {
-                Console.WriteLine("User not found.");
-                return;
-            }
-
-            Book book = Books.FirstOrDefault(b =>
-                b.Id.Equals(bookId, StringComparison.OrdinalIgnoreCase));
-
-            if (book == null)
-            {
-                Console.WriteLine("Book not found.");
-                return;
-            }
-
-            if (book.AvailableCopies <= 0)
-            {
-                Console.WriteLine("No copies available.");
-                return;
-            }
-
-            Loan loan = new Loan(borrower, book);
-            Loans.Add(loan);
-            book.AvailableCopies--;
-
-            Console.WriteLine("Book borrowed successfully.");
-        }
-
-        /*
-         * Returns a borrowed book.
-         * 
-         * The method finds the active loan for:
-         * - the given user
-         * - the given book
-         * 
-         * Then it sets the return date and increases available copies.
-         */
-        public void ReturnBook(string userId, string bookId)
-        {
-            Loan loan = Loans.FirstOrDefault(l =>
-                l.Borrower.Id.Equals(userId, StringComparison.OrdinalIgnoreCase) &&
-                l.Book.Id.Equals(bookId, StringComparison.OrdinalIgnoreCase) &&
-                l.IsActive());
-
-            if (loan == null)
-            {
-                Console.WriteLine("Active loan not found.");
-                return;
-            }
-
-            loan.ReturnDate = DateTime.Now;
-            loan.Book.AvailableCopies++;
-
-            Console.WriteLine("Book returned successfully.");
-        }
-
-        /*
-         * Prints all active loans.
-         */
         public void PrintActiveLoans()
         {
-            var activeLoans = Loans.Where(l => l.IsActive()).ToList();
+            List<Loan> activeLoans = GetActiveLoans();
 
             Console.WriteLine("Active Loans:");
-
             if (activeLoans.Count == 0)
             {
                 Console.WriteLine("No active loans.");
                 return;
             }
 
-            foreach (var loan in activeLoans)
+            foreach (Loan loan in activeLoans)
             {
                 Console.WriteLine(loan);
             }
         }
 
-        /*
-         * Prints all returned loans.
-         * This acts as the loan history.
-         */
         public void PrintLoanHistory()
         {
-            var history = Loans.Where(l => !l.IsActive()).ToList();
+            List<Loan> history = GetLoanHistory();
 
             Console.WriteLine("Loan History:");
-
             if (history.Count == 0)
             {
                 Console.WriteLine("No returned loans.");
                 return;
             }
 
-            foreach (var loan in history)
+            foreach (Loan loan in history)
             {
                 Console.WriteLine(loan);
             }

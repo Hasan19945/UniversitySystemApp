@@ -2,17 +2,6 @@ using System;
 
 namespace UniversitySystemApp.Models
 {
-    /*
-     * Loan represents the borrowing of a book.
-     * 
-     * A loan connects:
-     * - a user
-     * - a book
-     * - a borrow date
-     * - an optional return date
-     * 
-     * If ReturnDate is null, the loan is still active.
-     */
     public class Loan
     {
         public User Borrower { get; set; }
@@ -31,6 +20,11 @@ namespace UniversitySystemApp.Models
         public bool IsActive()
         {
             return ReturnDate == null;
+        }
+
+        public void ReturnBook()
+        {
+            ReturnDate = DateTime.Now;
         }
 
         public override string ToString()
